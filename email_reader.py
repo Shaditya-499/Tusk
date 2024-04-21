@@ -10,7 +10,34 @@ import csv
 
 # Define the SCOPES. If modifying it, delete the token.pickle file.
 SCOPES = ['https://www.googleapis.com/auth/gmail.readonly']
-data_file_path = "email_data.csv"
+email_data_file_path = "email_data.csv"
+if os.path.exists('tusk_email_data.csv'):
+    first_time = False
+message_ids = []
+subjects = []
+senders = []
+messages = []
+
+if os.path.exists(email_data_file_path):
+    with open(email_data_file_path, 'r', newline='', encoding='utf-8') as csvfile:
+        reader = csv.reader(csvfile)
+        first = True
+        for row in reader:
+            # Assuming each row contains Message-ID, Subject, From, and Message
+            if first:
+                first = False
+                pass
+            else:
+                message_id = row[0]
+                message_ids.append(message_id)
+                subject = row[1]
+                subjects.append(subject)
+                sender = row[2]
+                senders.append(sender)
+                message = row[3]
+                messages.append(message)
+
+r_email_data = zip(message_ids, subjects, senders, messages)
 
 
 def getEmails():
@@ -76,6 +103,9 @@ def getEmails():
                 if d['name'] == 'Message-ID':
                     id = d['value']
 
+            if id in message_ids:
+                break
+
             # The Body of the message is in Encrypted format. So, we have to decode it.
             # Get the data and decode it with base 64 decoder.
             parts = payload.get('parts')[0]
@@ -102,18 +132,16 @@ def getEmails():
             pass
 
     email_data = zip(IDs, Subjects, Senders, Messages)
-    messages = []
-    message_ids = []
-    subjects = []
-    senders = []
 
     # Write the email data to the CSV file
-    with open(data_file_path, 'w', newline='', encoding='utf-8') as csvfile:
+    with open(email_data_file_path, 'w', newline='', encoding='utf-8') as csvfile:
         writer = csv.writer(csvfile)
         # Write header row
         writer.writerow(['Message-ID', 'Subject', 'From', 'Message'])
         # Write data rows
         for row in email_data:
+            writer.writerow(row)
+        for row in r_email_data:
             writer.writerow(row)
 
 
